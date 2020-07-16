@@ -1,5 +1,11 @@
-const main = require('./main')
+const {
+  listData,
+  findByLocationAndSize,
+  findByVendorAndLocation,
+} = require("./main");
 
 module.exports = {
-    main
- }
+  listRecords: listData,
+  findByLocationAndSize,
+  findByVendorAndLocation,
+};

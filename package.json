@@ -2,11 +2,11 @@
   "name": "storeapi",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "serve": "nodemon index.js",
-    "start": "node index.js"
+    "serve": "nodemon app.js",
+    "start": "node app.js"
   },
   "author": "Olusegun Komolafe",
   "license": "ISC",

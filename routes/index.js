@@ -1,9 +1,20 @@
-const {main} = require('../controllers')
+var express = require("express");
+var router = express.Router();
 
-// main.post('/createrecord', main.Create)
+const {
+  listRecords,
+  findByLocationAndSize,
+  findByVendorAndLocation,
+} = require("../controllers");
 
-// main.get('/getrecord', main.read)
+router.get("/getRecords", listRecords);
+router.get(
+  "/getPriceByLocationAndSize/:location/:size/price",
+  findByLocationAndSize
+);
+router.get(
+  "/getPriceByVendorAndLocation/:vendor/:location/price",
+  findByVendorAndLocation
+);
 
-// // main.delete('/deleterecord', main.delete)
-
-module.exports = main
+module.exports = router;
