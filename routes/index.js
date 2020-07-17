@@ -13,13 +13,13 @@ router.get("/", (req, res) => {
     message: "Welcome to the best API",
   });
 });
-router.get("/getRecords", listRecords);
+router.get("/getRecords/:date", listRecords);
 router.get(
-  "/getPriceByLocationAndSize/:location/:size/price",
+  "/getPriceByLocationAndSize/:date/:location/:size/:sType/price",
   findByLocationAndSize
 );
 router.get(
-  "/getPriceByVendorAndLocation/:vendor/:location/price",
+  "/getPriceByVendorAndLocation/:date/:vendor/:location/:sType/price",
   findByVendorAndLocation
 );
 

@@ -57,14 +57,16 @@ async function authorize(credentials) {
   return oAuth2Client;
 }
 
-async function listRecords() {
+async function listRecords(date) {
+  const formattedDate = date.replace(/-/g, "/");
+
   const credentials = JSON.parse(readfile());
   const authClient = await authorize(credentials);
   const sheets = google.sheets({ version: "v4" });
 
   const request = {
     spreadsheetId: "1XaVChakZwUlv-ReKIVzpA2j0PRqmFA1qEGUeHerXJ0s",
-    range: ["07/05/20"],
+    range: [formattedDate],
     majorDimension: "ROWS",
     auth: authClient,
   };
@@ -79,11 +81,12 @@ async function listRecords() {
 }
 
 exports.listData = async (req, res) => {
-  const response = await listRecords();
+  const { date } = req.params;
+  const response = await listRecords(date);
 
   const filteredSpreadsheetData = response.values
-    .filter((data) => data.length !== 0)
-    .slice(1);
+    .slice(1)
+    .filter((data) => data.length !== 0);
 
   const newSpreadsheetData = filteredSpreadsheetData.map((data, ind) => {
     const vendor = data[0];
@@ -116,9 +119,15 @@ exports.listData = async (req, res) => {
 };
 
 exports.findByLocationAndSize = async (req, res) => {
-  const { location, size } = req.params;
+  const {date, location, size, sType } = req.params;
 
-  const response = await listRecords();
+  if (!date || !location || !size || !sType) {
+    return res.status(400).json({
+      status: 400
+    })
+  }
+
+  const response = await listRecords(date);
 
   const filteredSpreadsheetData = response.values
     .slice(1)
@@ -126,11 +135,72 @@ exports.findByLocationAndSize = async (req, res) => {
       (data) =>
         data.length !== 0 &&
         data[3].toString() === location.toString() &&
+        data[6].toString() === sType.toString() &&
         parseFloat(data[5]) >= parseFloat(size)
     )
     .sort((a, b) => {
-      const priceA = a[6];
-      const priceB = b[6];
+      const priceA = a[7];
+      const priceB = b[7];
+
+      if (!priceA || !priceB) {
+        return -1;
+      }
+
+      return (
+        parseFloat(priceA.slice(1).replace(/[,]/g, "")) -
+        parseFloat(priceB.slice(1).replace(/[,]/g, ""))
+      );
+    });
+
+  const newSpreadsheetData = filteredSpreadsheetData.map((data) => {
+       const vendor = data[0];
+       const type = data[1];
+       const state = data[2];
+       const city = data[3];
+       const grade = data[4];
+       const size = data[5];
+       const sType = data[6];
+       const price = data[7];
+       const quantity = data[8];
+
+    const obj = {
+      vendor,
+      type,
+      state,
+      city,
+      grade,
+      size,
+      sType,
+      price,
+      quantity,
+    };
+
+    return obj;
+  });
+
+  return res.status(200).json({
+    status: 200,
+    data: [...newSpreadsheetData],
+  });
+};
+
+exports.findByVendorAndLocation = async (req, res) => {
+  const { date, vendor, location, sType } = req.params;
+
+  const response = await listRecords(date);
+
+  const filteredSpreadsheetData = response.values
+    .slice(1)
+    .filter(
+      (data) =>
+        data.length !== 0 &&
+        data[0].toLowerCase() === vendor.toLowerCase() &&
+        data[6].toLowerCase() === sType.toLowerCase() &&
+        data[3].toLowerCase() === location.toLowerCase()
+    )
+    .sort((a, b) => {
+      const priceA = a[7];
+      const priceB = b[7];
 
       if (!priceA || !priceB) {
         return -1;
@@ -149,8 +219,9 @@ exports.findByLocationAndSize = async (req, res) => {
     const city = data[3];
     const grade = data[4];
     const size = data[5];
-    const price = data[6];
-    const quantity = data[7];
+    const sType = data[6];
+    const price = data[7];
+    const quantity = data[8];
 
     const obj = {
       vendor,
@@ -159,63 +230,7 @@ exports.findByLocationAndSize = async (req, res) => {
       city,
       grade,
       size,
-      price,
-      quantity,
-    };
-
-    return obj;
-  });
-
-  return res.status(200).json({
-    status: 200,
-    data: [...newSpreadsheetData],
-  });
-};
-
-exports.findByVendorAndLocation = async (req, res) => {
-  const { vendor, location } = req.params;
-
-  const response = await listRecords();
-
-  const filteredSpreadsheetData = response.values
-    .slice(1)
-    .filter(
-      (data) =>
-        data.length !== 0 &&
-        data[0].toString() === vendor.toString() &&
-        data[3].toString() === location.toString()
-    )
-    .sort((a, b) => {
-      const priceA = a[6];
-      const priceB = b[6];
-
-      if (!priceA || !priceB) {
-        return -1
-      }
-
-      return (
-        parseFloat(priceA.slice(1).replace(/[,]/g, "")) -
-        parseFloat(priceB.slice(1).replace(/[,]/g, ""))
-      );
-    });
-
-  const newSpreadsheetData = filteredSpreadsheetData.map((data) => {
-    const vendor = data[0];
-    const type = data[1];
-    const state = data[2];
-    const city = data[3];
-    const grade = data[4];
-    const size = data[5];
-    const price = data[6];
-    const quantity = data[7];
-
-    const obj = {
-      vendor,
-      type,
-      state,
-      city,
-      grade,
-      size,
+      sType,
       price,
       quantity,
     };
