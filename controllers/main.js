@@ -189,14 +189,24 @@ exports.findByVendorAndLocation = async (req, res) => {
 
   const response = await listRecords(date);
 
+  const isSTypeColPresennt = response.values[0].find((x) => x === "sType");
+
+  if (isSTypeColPresennt === undefined) {
+    return res.status(400).json({
+      status: 400,
+      error: "Couldn't find sType column on spreadsheet"
+    });
+  }
+
+
   const filteredSpreadsheetData = response.values
     .slice(1)
     .filter(
       (data) =>
         data.length !== 0 &&
         data[0].toLowerCase() === vendor.toLowerCase() &&
-        data[6].toLowerCase() === sType.toLowerCase() &&
-        data[3].toLowerCase() === location.toLowerCase()
+        data[3].toLowerCase() === location.toLowerCase() &&
+        data[6].toLowerCase() === sType.toLowerCase()
     )
     .sort((a, b) => {
       const priceA = a[7];
